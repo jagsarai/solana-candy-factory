@@ -11,7 +11,7 @@ export const MAX_URI_LENGTH = 200;
 export const MAX_SYMBOL_LENGTH = 10;
 export const MAX_CREATOR_LEN = 32 + 1 + 1;
 
-export async function fetchHashTable(hash: string, metadataEnabled?: boolean): Promise<any[]> {
+export async function fetchHolderList(hash: string): Promise<Set<String>> {
   const metadataAccounts = await MetadataProgram.getProgramAccounts(
     connection,
     {
@@ -40,25 +40,28 @@ export async function fetchHashTable(hash: string, metadataEnabled?: boolean): P
   )
 
 
-  const mintHashes: any = []
+  const allHolders = new Set<string>([])
 
   for (let index = 0; index < metadataAccounts.length; index++) {
     const account = metadataAccounts[index];
     const accountInfo: any = await connection.getParsedAccountInfo(account.pubkey);
     const metadata = new Metadata(hash.toString(), accountInfo.value);
-    if (metadataEnabled) mintHashes.push(metadata.data)
-    else mintHashes.push(metadata.data.mint)
+    const allTokenHolders: any = await connection.getTokenLargestAccounts(new anchor.web3.PublicKey(metadata.data.mint));
+    const onlyHolders = allTokenHolders.value.filter((tokenHolder: any) => tokenHolder.uiAmount)
+    const largestTokenHolder = onlyHolders[0]
+    const tokenHolderAddress = largestTokenHolder.address
+    const tokenHolderOwner: any = await connection.getParsedAccountInfo(tokenHolderAddress);
+    allHolders.add(tokenHolderOwner.value.data.parsed.info.owner)
   }
 
-
-  return mintHashes
+  return allHolders
 }
 
-export function useHashTable(candyMachineId: string, metadataEnabled: boolean) {
-  const [hashTable, setHashTable] = useState<any[]>([])
+export function useHolderList(candyMachineId: string) {
+  const [holderList, setHolderList] = useState<Set<String>>(new Set([]))
   const [isLoading, setIsLoading] = useState(false)
 
-  const getHashTable = async () => {
+  const getHolderList = async () => {
     if (!candyMachineId || !candyMachineId.length) {
       toast.error("Please type the Candy Machine ID in the input box.")
 
@@ -66,9 +69,9 @@ export function useHashTable(candyMachineId: string, metadataEnabled: boolean) {
     }
     try {
       setIsLoading(true)
-      const data = await fetchHashTable(candyMachineId, metadataEnabled)
-      setHashTable(data)
-      if (data.length === 0)
+      const data = await fetchHolderList(candyMachineId)
+      setHolderList(data)
+      if (data.size === 0)
         toast.success("Zero mint hashes have been found so far for this candy machine.")
     } catch (error) {
       console.error(error)
@@ -77,5 +80,5 @@ export function useHashTable(candyMachineId: string, metadataEnabled: boolean) {
     setIsLoading(false)
   }
 
-  return { hashTable, isLoading, getHashTable }
+  return { holderList, isLoading, getHolderList }
 }
