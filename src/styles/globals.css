@@ -1,3 +1,38 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+body {
+    color: white
+}
+
+main {
+    background: #150d29;
+    flex: 1;
+}
+
+header {
+    background: #30cfbe;
+}
+
+footer {
+    /* height: 100px; */
+    background: #30cfbe;
+}
+
+.about {
+    background: #1d0c47;
+    border-radius: 80px;
+    border-color: #30cfbe;
+}
+
+.about h1 {
+    display: block;
+    font-size: 2em;
+    margin-block-start: 0.67em;
+    margin-block-end: 0.67em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    font-weight: bold;
+}
